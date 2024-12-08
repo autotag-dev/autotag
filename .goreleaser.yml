@@ -108,11 +108,47 @@ archives:
       - goos: windows
         format: zip
 
-# TODO(joem): multi-arch docker image: https://goreleaser.com/cookbooks/multi-platform-docker-images/
 dockers:
   - dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
     image_templates:
-      - "ghcr.io/autotag-dev/autotag:{{ .Tag }}" # v1.0.0
-      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}" # v1
-      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}" # v1.0
-      - "ghcr.io/autotag-dev/autotag:latest"
+      - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-amd64" # v1.0.0-amd64
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}-amd64" # v1-amd64
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-amd64" # v1.0-amd64
+      - "ghcr.io/autotag-dev/autotag:latest-amd64"
+
+  - dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+    image_templates:
+      - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-arm64" # v1.0.0-arm64
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}-arm64" # v1-arm64
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-arm64" # v1.0-arm64
+      - "ghcr.io/autotag-dev/autotag:latest-arm64"
+
+# use `docker_manifests` section to create combined multi-arch image manifests:
+docker_manifests:
+  - name_template: "ghcr.io/autotag-dev/autotag:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-amd64"
+      - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-arm64"
+
+  - name_template: "ghcr.io/autotag-dev/autotag:{{ .Major }}"
+    image_templates:
+      - "ghcr.io/autotag-dev/autotag:{{ .Major }}-amd64"
+      - "ghcr.io/autotag-dev/autotag:{{ .Major }}-arm64"
+
+  - name_template: "ghcr.io/autotag-dev/autotag:{{ .Major }}.{{ .Minor }}"
+    image_templates:
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-amd64"
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-arm64"
+
+  - name_template: "ghcr.io/autotag-dev/autotag:latest"
+    image_templates:
+      - "ghcr.io/autotag-dev/autotag:latest-amd64"
+      - "ghcr.io/autotag-dev/autotag:latest-arm64"
