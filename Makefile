@@ -19,4 +19,4 @@ cov:
 	go tool cover -func cover.out
 
 snapshot:
-	@goreleaser --rm-dist --snapshot --debug
+	@goreleaser release --clean --snapshot --verbose

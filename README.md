@@ -22,15 +22,19 @@ Installing
 ### Pre-built binaries
 
 | OS    | Arch  | binary              |
-| ----- | ----- | ------------------- |
+|-------|-------|---------------------|
 | macOS | amd64 | [autotag][releases] |
 | Linux | amd64 | [autotag][releases] |
 
 ### Docker images
 
-| Arch  | Images                                                           |
-| ----- | ---------------------------------------------------------------- |
-| amd64 | `ghcr.io/autotag-dev/autotag:latest`, `vX.Y.Z`, `vX.Y`, `vX` |
+> multi-arch and -arm64 images are available beginning with v1.3.34
+
+| Arch       | Images                                                                               |
+|------------|--------------------------------------------------------------------------------------|
+| multi-arch | `ghcr.io/autotag-dev/autotag:latest`, `vX.Y.Z`, `vX.Y`, `vX`                         |
+| amd64      | `ghcr.io/autotag-dev/autotag:latest-amd64`, `vX.Y.Z-amd64`, `vX.Y-amd64`, `vX-amd64` |
+| arm64      | `ghcr.io/autotag-dev/autotag:latest-arm64`, `vX.Y.Z-arm64`, `vX.Y-arm64`, `vX-arm64` |
 
 [releases]: https://github.com/autotag-dev/autotag/releases/latest
 
