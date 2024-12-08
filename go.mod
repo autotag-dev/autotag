@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/alecthomas/assert v1.0.0
-	github.com/gogs/git-module v1.6.0
+	github.com/gogs/git-module v1.8.3
 	github.com/hashicorp/go-version v1.7.0
 	github.com/jessevdk/go-flags v1.6.1
 )
