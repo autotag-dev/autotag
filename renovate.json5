@@ -42,6 +42,13 @@
       "schedule": [
         "after 10pm on the first day of the month"
       ]
+    },
+    {
+      "description": "Don't pin alpine image SHAs, updates too frequently",
+      "matchPackageNames": [
+        "alpine"
+      ],
+      "pinDigests": false
     }
   ],
   "labels": [

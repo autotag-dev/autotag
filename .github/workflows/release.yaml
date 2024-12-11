@@ -60,6 +60,14 @@ jobs:
         run: |
           sudo apt-get -qqy update && sudo apt-get -qqy install rpm
 
+      # setup qemu and buildx for cross-builds (arm64)
+      - name: Set up QEMU (for arm64 builds)
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3
+
+      # finally run goreleaser to build and publish all artifacts:
       - name: Deploy Autotag Release
         # TODO(vtopc): switch to the `goreleaser/goreleaser-action` GHA?
         run: |
