@@ -138,12 +138,12 @@ docker_manifests:
       - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-amd64"
       - "ghcr.io/autotag-dev/autotag:{{ .Tag }}-arm64"
 
-  - name_template: "ghcr.io/autotag-dev/autotag:{{ .Major }}"
+  - name_template: "ghcr.io/autotag-dev/autotag:v{{ .Major }}"
     image_templates:
-      - "ghcr.io/autotag-dev/autotag:{{ .Major }}-amd64"
-      - "ghcr.io/autotag-dev/autotag:{{ .Major }}-arm64"
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}-amd64"
+      - "ghcr.io/autotag-dev/autotag:v{{ .Major }}-arm64"
 
-  - name_template: "ghcr.io/autotag-dev/autotag:{{ .Major }}.{{ .Minor }}"
+  - name_template: "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}"
     image_templates:
       - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-amd64"
       - "ghcr.io/autotag-dev/autotag:v{{ .Major }}.{{ .Minor }}-arm64"
