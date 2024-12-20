@@ -143,7 +143,7 @@ If no keywords are specified a **Patch** bump is applied.
 
 ### Pre-Release Tags
 
-`autotag` supports appending additional test to the calculated next version string:
+`autotag` supports appending additional text to the calculated next version string:
 
 - Use `-p/--pre-release-name=` to append a pre-release **name** to the version. Pre-release names are subject to the rules outlined in the [SemVer](https://semver.org/#spec-item-9)
   spec.
@@ -158,7 +158,7 @@ Optional SemVer build metadata can be appended to the version string after a `+`
 Build metadata is subject to the rules outlined in the [SemVer](https://semver.org/#spec-item-10)
 spec.
 
-A common uses might be the current git reference: `git rev-parse --short HEAD`.
+A common use might be the current git reference: `git rev-parse --short HEAD`.
 
 Multiple metadata items should be seperated by a `.`, eg: `foo.bar`
 
