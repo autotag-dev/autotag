@@ -1,62 +1,62 @@
 {
-  "extends": [
-    "config:best-practices",
-    ":rebaseStalePrs",
-    "regexManagers:dockerfileVersions"
+  extends: [
+    'config:best-practices',
+    ':rebaseStalePrs',
+    'customManagers:dockerfileVersions',
   ],
-  "packageRules": [
+  packageRules: [
     {
-      "matchPackagePatterns": [
-        "*"
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'digest',
       ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "digest"
+      groupName: 'all non-major dependencies',
+      groupSlug: 'all-minor-patch-digest',
+      schedule: [
+        'after 10pm on friday',
       ],
-      "groupName": "all non-major dependencies",
-      "groupSlug": "all-minor-patch-digest",
-      "schedule": [
-        "after 10pm on friday"
-      ]
+      matchPackageNames: [
+        '*',
+      ],
     },
     {
-      "matchManagers": [
-        "gomod"
+      matchManagers: [
+        'gomod',
       ],
-      "postUpdateOptions": [
-        "gomodTidy"
-      ]
+      postUpdateOptions: [
+        'gomodTidy',
+      ],
     },
     {
-      "description": "Only update codeql-action digest updates monthly",
-      "matchDatasources": [
-        "github-actions"
+      description: 'Only update codeql-action digest updates monthly',
+      matchDatasources: [
+        'github-actions',
       ],
-      "matchPackageNames": [
-        "github/codeql-action"
+      matchPackageNames: [
+        'github/codeql-action',
       ],
-      "matchUpdateTypes": [
-        "digest"
+      matchUpdateTypes: [
+        'digest',
       ],
-      "schedule": [
-        "after 10pm on the first day of the month"
-      ]
+      schedule: [
+        'after 10pm on the first day of the month',
+      ],
     },
     {
-      "description": "Don't pin alpine image SHAs, updates too frequently",
-      "matchPackageNames": [
-        "alpine"
+      description: "Don't pin alpine image SHAs, updates too frequently",
+      matchPackageNames: [
+        'alpine',
       ],
-      "pinDigests": false
-    }
+      pinDigests: false,
+    },
   ],
-  "labels": [
-    "dependencies"
+  labels: [
+    'dependencies',
   ],
-  "osvVulnerabilityAlerts": true,
-  "dependencyDashboardOSVVulnerabilitySummary": "unresolved",
-  "vulnerabilityAlerts": {
-    "enabled": true
-  }
+  osvVulnerabilityAlerts: true,
+  dependencyDashboardOSVVulnerabilitySummary: 'unresolved',
+  vulnerabilityAlerts: {
+    enabled: true,
+  },
 }
