@@ -47,14 +47,17 @@ type testRepoSetup struct {
 	// commit message parsing logic. eg: "#major this is a major commit"
 	nextCommit string
 
-	// (optional) Supply a list of commits to apply so you can test the logic between to possible tags wheere they may be more complex multiple bumps
+	// (optional) Supply a list of commits to apply so you can test the logic between to possible tags where they may be more complex multiple bumps
 	commitList []string
+
+	// (optional) will enforce conventions and return an error if parsers don't find anything (default: false)
+	strictMatch bool
 }
 
 // newTestRepo creates a new git repo in a temporary directory and returns an autotag.GitRepo struct for
 // testing the autotag package.
 // You must call cleanupTestRepo(t, r.repo) to remove the temporary directory after running tests.
-func newTestRepo(t *testing.T, setup testRepoSetup) GitRepo {
+func newTestRepo(t *testing.T, setup testRepoSetup) (GitRepo, error) {
 	t.Helper()
 
 	tr := createTestRepo(t, setup.branch)
@@ -100,12 +103,13 @@ func newTestRepo(t *testing.T, setup testRepoSetup) GitRepo {
 		BuildMetadata:             setup.buildMetadata,
 		Scheme:                    setup.scheme,
 		Prefix:                    !setup.disablePrefix,
+		StrictMatch:               setup.strictMatch,
 	})
 	if err != nil {
-		t.Fatal("Error creating repo: ", err)
+		return GitRepo{}, err
 	}
 
-	return *r
+	return *r, nil
 }
 
 func TestValidateConfig(t *testing.T) {
@@ -162,6 +166,7 @@ func TestValidateConfig(t *testing.T) {
 				PreReleaseTimestampLayout: "epoch",
 				BuildMetadata:             "g12345678",
 				Prefix:                    true,
+				StrictMatch:               true,
 			},
 			shouldErr: false,
 		},
@@ -267,11 +272,84 @@ func TestNewRepoMainAndMaster(t *testing.T) {
 	}
 }
 
+func TestNewRepoStrictMatch(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup testRepoSetup
+	}{
+		// tests for autotag (default) scheme
+		{
+			name: "autotag scheme, bad type commit fails with strict match",
+			setup: testRepoSetup{
+				scheme:      "autotag",
+				initialTag:  "v1.0.0",
+				nextCommit:  "[foo]: thing 1",
+				strictMatch: true,
+			},
+		},
+		{
+			name: "autotag scheme, fails to tag same commit twice with strict match",
+			setup: testRepoSetup{
+				scheme:      "autotag",
+				initialTag:  "v1.0.0",
+				strictMatch: true,
+			},
+		},
+
+		// tests for conventional commits scheme. Based on:
+		{
+			name: "conventional commits, bad type commit fails with strict match",
+			setup: testRepoSetup{
+				scheme:      "conventional",
+				initialTag:  "v1.0.0",
+				nextCommit:  "foo: thing 1",
+				strictMatch: true,
+			},
+		},
+		{
+			name: "conventional commits, bad type with breaking change fails with strict match",
+			setup: testRepoSetup{
+				scheme:      "conventional",
+				initialTag:  "v1.0.0",
+				nextCommit:  "foo: allow provided config object to extend other configs\n\nbody before footer\n\nBREAKING CHANGE: non-backwards compatible",
+				strictMatch: true,
+			},
+		},
+		{
+			name: "conventional commits, bad type with ! fails with strict match",
+			setup: testRepoSetup{
+				scheme:      "conventional",
+				initialTag:  "v1.0.0",
+				nextCommit:  "foo!: thing 1",
+				strictMatch: true,
+			},
+		},
+		{
+			name: "conventional commits, fails to tag same commit twice with strict match",
+			setup: testRepoSetup{
+				scheme:      "conventional",
+				initialTag:  "v1.0.0",
+				strictMatch: true,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := newTestRepo(t, tc.setup)
+			assert.Error(t, err)
+		})
+	}
+}
+
 func TestMajor(t *testing.T) {
-	r := newTestRepo(t, testRepoSetup{
+	r, err := newTestRepo(t, testRepoSetup{
 		branch:     "master",
 		initialTag: "v1.0.1",
 	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
 	defer cleanupTestRepo(t, r.repo)
 
 	v, err := r.MajorBump()
@@ -287,10 +365,13 @@ func TestMajor(t *testing.T) {
 }
 
 func TestMajorWithMain(t *testing.T) {
-	r := newTestRepo(t, testRepoSetup{
+	r, err := newTestRepo(t, testRepoSetup{
 		branch:     "main",
 		initialTag: "v1.0.1",
 	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
 	defer cleanupTestRepo(t, r.repo)
 
 	v, err := r.MajorBump()
@@ -306,9 +387,12 @@ func TestMajorWithMain(t *testing.T) {
 }
 
 func TestMinor(t *testing.T) {
-	r := newTestRepo(t, testRepoSetup{
+	r, err := newTestRepo(t, testRepoSetup{
 		initialTag: "v1.0.1",
 	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
 	defer cleanupTestRepo(t, r.repo)
 
 	v, err := r.MinorBump()
@@ -322,9 +406,12 @@ func TestMinor(t *testing.T) {
 }
 
 func TestPatch(t *testing.T) {
-	r := newTestRepo(t, testRepoSetup{
+	r, err := newTestRepo(t, testRepoSetup{
 		initialTag: "v1.0.1",
 	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
 	defer cleanupTestRepo(t, r.repo)
 
 	v, err := r.PatchBump()
@@ -638,10 +725,11 @@ func TestAutoTag(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := newTestRepo(t, tc.setup)
+			r, err := newTestRepo(t, tc.setup)
+			checkFatal(t, err)
 			defer cleanupTestRepo(t, r.repo)
 
-			err := r.AutoTag()
+			err = r.AutoTag()
 			if tc.shouldErr {
 				assert.Error(t, err)
 			} else {

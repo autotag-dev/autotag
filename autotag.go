@@ -31,6 +31,20 @@ var (
 	// conventional commit message scheme:
 	// https://regex101.com/r/XciTmT/2
 	conventionalCommitRex = regexp.MustCompile(`^\s*(?P<type>\w+)(?P<scope>(?:\([^()\r\n]*\)|\()?(?P<breaking>!)?)(?P<subject>:.*)?`)
+	// conventional commit authorized types:
+	conventionalCommitAuthorizedTypes = map[string]bumper{
+		"feat":     minorBumper,
+		"build":    patchBumper,
+		"chore":    patchBumper,
+		"ci":       patchBumper,
+		"docs":     patchBumper,
+		"fix":      patchBumper,
+		"perf":     patchBumper,
+		"refactor": patchBumper,
+		"revert":   patchBumper,
+		"style":    patchBumper,
+		"test":     patchBumper,
+	}
 
 	// versionRex matches semVer style versions, eg: `v1.0.0`
 	versionRex = regexp.MustCompile(`^v?([\d]+\.?.*)`)
@@ -111,6 +125,9 @@ type GitRepoConfig struct {
 
 	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
 	Prefix bool
+
+	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
+	StrictMatch bool
 }
 
 // GitRepo represents a repository we want to run actions against
@@ -127,7 +144,8 @@ type GitRepo struct {
 	preReleaseTimestampLayout string
 	buildMetadata             string
 
-	scheme string
+	scheme      string
+	strictMatch bool
 
 	prefix bool
 }
@@ -188,6 +206,7 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 		buildMetadata:             cfg.BuildMetadata,
 		scheme:                    cfg.Scheme,
 		prefix:                    cfg.Prefix,
+		strictMatch:               cfg.StrictMatch,
 	}
 
 	err = r.parseTags()
@@ -195,7 +214,7 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 		return nil, err
 	}
 
-	if err := r.calcVersion(); err != nil {
+	if err = r.calcVersion(); err != nil {
 		return nil, err
 	}
 
@@ -386,23 +405,26 @@ func (r *GitRepo) calcVersion() error {
 	revList := []string{fmt.Sprintf("%s..%s", r.currentTag.ID, startCommit.ID)}
 
 	l, err := r.repo.RevList(revList)
+	if len(l) == 0 && r.strictMatch {
+		return fmt.Errorf("no version to bump for the same commit")
+	}
 	if err != nil {
 		log.Printf("Error loading history for tag '%s': %s ", r.currentVersion, err.Error())
 	}
 
-	// r.branchID is newest commit; r.currentTag.ID is oldest
+	// r.branchID is the newest commit; r.currentTag.ID is oldest
 	log.Printf("Checking commits from %s to %s ", r.branchID, r.currentTag.ID)
 
-	// Revlist returns in reverse Crhonological We want chonological. Then check each commit for bump messages
+	// Revlist returns in reverse Chronological We want chronological. Then check each commit for bump messages
 	for i := len(l) - 1; i >= 0; i-- {
 		commit := l[i] // getting the reverse order element
 		if commit == nil {
-			return fmt.Errorf("commit pointed to nil object. This should not happen.")
+			return fmt.Errorf("commit pointed to nil object. This should not happen")
 		}
 
 		v, nerr := r.parseCommit(commit)
 		if nerr != nil {
-			log.Fatal(nerr)
+			return nerr
 		}
 
 		if v != nil && v.GreaterThan(r.newVersion) {
@@ -412,6 +434,9 @@ func (r *GitRepo) calcVersion() error {
 
 	// if there is no movement on the version from commits, bump patch
 	if r.newVersion.Equal(r.currentVersion) {
+		if r.strictMatch {
+			return fmt.Errorf("no version to bump found in commit message")
+		}
 		if r.newVersion, err = patchBumper.bump(r.currentVersion); err != nil {
 			return err
 		}
@@ -462,9 +487,13 @@ func (r *GitRepo) parseCommit(commit *git.Commit) (*version.Version, error) {
 
 	switch r.scheme {
 	case "conventional":
-		b = parseConventionalCommit(msg)
+		b = parseConventionalCommit(msg, r.strictMatch)
 	case "", "autotag":
 		b = parseAutotagCommit(msg)
+	}
+
+	if r.strictMatch && b == nil {
+		return nil, fmt.Errorf("no match found for commit %s", commit.ID)
 	}
 
 	// fallback to patch bump if no matches from the scheme parsers
@@ -502,28 +531,32 @@ func parseAutotagCommit(msg string) bumper {
 }
 
 // parseConventionalCommit implements the Conventional Commit scheme. Given a commit message
+// A strict match option will enforce that the commit message must match the conventional commit
 // it will return the correct version bumper. In the case of non-confirming conventional commit
 // it will return nil and the caller will decide what action to take.
 // https://www.conventionalcommits.org/en/v1.0.0/#summary
-func parseConventionalCommit(msg string) bumper {
+func parseConventionalCommit(msg string, strictMatch bool) bumper {
 	matches := findNamedMatches(conventionalCommitRex, msg)
+
+	// If we're in strict match and no matches are found, return nil
+	bumperType, authorized := conventionalCommitAuthorizedTypes[matches["type"]]
+	if strictMatch && !authorized {
+		return nil
+	}
 
 	// If the commit contains a footer with 'BREAKING CHANGE:' it is always a major bump
 	if strings.Contains(msg, "\nBREAKING CHANGE:") {
 		return majorBumper
 	}
 
-	// if the type/scope in the header includes a trailing '!' this is a breaking change
+	// If the type/scope in the header includes a trailing '!' this is a breaking change
 	if breaking, ok := matches["breaking"]; ok && breaking == "!" {
 		return majorBumper
 	}
 
-	// if the type in the header is 'feat' it is a minor change
-	if typ, ok := matches["type"]; ok && typ == "feat" {
-		return minorBumper
-	}
-
-	return nil
+	// If the type in the header match a type try to find it in the authorized list
+	// If it's not in the list it returns nil
+	return bumperType
 }
 
 // MajorBump will bump the version one major rev 1.0.0 -> 2.0.0
