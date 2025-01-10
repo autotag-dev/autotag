@@ -69,8 +69,9 @@ jobs:
 
       # finally run goreleaser to build and publish all artifacts:
       - name: Deploy Autotag Release
-        # TODO(vtopc): switch to the `goreleaser/goreleaser-action` GHA?
-        run: |
-          curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+        uses: goreleaser/goreleaser-action@9ed2f89a662bf1735a48bc8557fd212fa902bebf # v6
+        with:
+          version: latest
+          args: release --clean --parallelism=2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
