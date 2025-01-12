@@ -141,6 +141,37 @@ refactor!: drop support for Node 6
 
 If no keywords are specified a **Patch** bump is applied.
 
+### Strict Match Option
+
+The `--strict-match` option enforces that commit messages must strictly adhere to the specified commit message scheme.
+When this option is enabled, the parser will return an error if a commit message does not conform to
+the expected format, preventing the commit from being processed. This ensures that only commits with valid messages
+are considered for version bumps.
+
+#### Effect on Default Behavior for All Schemes
+
+When the `--strict-match` option is enabled, the behavior of the commit message parsing changes as follows:
+
+- **Autotag Scheme**:
+  - Without `--strict-match`: Commit messages that do not contain `[major]`, `[minor]`, or `[patch]` will result in a
+  patch version bump by default.
+  - With `--strict-match`: Commit messages that do not contain `[major]`, `[minor]`, or `[patch]` will result in an
+  error, and the commit will not be processed.
+
+- **Conventional Commits Scheme**:
+  - Without `--strict-match`: Commit messages that do not follow the conventional commit format will result in a
+  patch version bump by default.
+  - With `--strict-match`: Commit messages that do not follow the conventional commit format will result in an
+  error, and the commit will not be processed.
+
+#### Usage
+
+To use the strict match option, add the `--strict-match` flag when running the autotag tool:
+
+```sh
+autotag --strict-match
+```
+
 ### Pre-Release Tags
 
 `autotag` supports appending additional text to the calculated next version string:

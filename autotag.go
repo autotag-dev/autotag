@@ -126,7 +126,9 @@ type GitRepoConfig struct {
 	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
 	Prefix bool
 
-	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
+	// StrictMatch enforces strict mode on the scheme parsers, returning an error if no match is found.
+	// This is useful for CI/CD pipelines where you want to ensure that the commit message adheres to the scheme.
+	// Disabled by default.
 	StrictMatch bool
 }
 
