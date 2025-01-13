@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alecthomas/assert"
+	assert "github.com/alecthomas/assert/v2"
 	"github.com/gogs/git-module"
 )
 
@@ -738,7 +738,7 @@ func TestAutoTag(t *testing.T) {
 
 			tags, err := r.repo.Tags()
 			checkFatal(t, err)
-			assert.Contains(t, tags, tc.expectedTag)
+			assert.SliceContains(t, tags, tc.expectedTag)
 		})
 	}
 }
