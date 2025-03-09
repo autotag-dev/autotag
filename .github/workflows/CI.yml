@@ -13,6 +13,11 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    # set perms explicitly and include 'checks: write' so that golangci-lint can report results
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: write
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
