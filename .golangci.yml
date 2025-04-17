@@ -2,18 +2,6 @@
 # https://github.com/golangci/golangci/wiki/Configuration
 version: 2
 linters:
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
 formatters:
   enable:
     - goimports
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
