@@ -1,6 +1,22 @@
-# golangci-lint configuration, shared between `make lint` and `golangci/golangci-lint-action` GitHub Action
-# https://github.com/golangci/golangci/wiki/Configuration
-
+version: "2"
 linters:
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
   enable:
     - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
