@@ -1,7 +1,13 @@
 # golangci-lint configuration, shared between `make lint` and `golangci/golangci-lint-action` GitHub Action
 # https://github.com/golangci/golangci/wiki/Configuration
-version: 2
+version: "2"
 linters:
+  enable:
+    - govet
+    - staticcheck
+    - unused
+    - errcheck
+    - ineffassign
 formatters:
   enable:
     - goimports
