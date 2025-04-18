@@ -87,22 +87,22 @@ changelog:
 archives:
   # Old release format for backwards compatibility with existing scripts:  Binary named 'Linux'
   - id: old-format-linux
-    builds: ["linux-amd64-only"]
+    ids: ["linux-amd64-only"]
     formats: [binary]
     name_template: "Linux"
   # Old release format for backwards compatibility with existing scripts:  Binary named 'OSX'
   - id: old-format-osx
-    builds: ["macos-amd64-only"]
+    ids: ["macos-amd64-only"]
     formats: [binary]
     name_template: "OSX"
   # New release format, binaries for all platforms in the form: `autotag_linux_amd64`
   - id: new-format-binary-only-all-platforms
     formats: [binary]
-    builds: ["linux", "macos"]
+    ids: ["linux", "macos"]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
   # archive releases containing: binary, readme, and license. tarballs (macos, linux), zip (windows)
   - id: archives
-    builds: ["linux", "macos"]
+    ids: ["linux", "macos"]
     name_template: '{{ .ProjectName }}_{{ .Os }}_{{ if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}'
     format_overrides:
       - goos: windows
