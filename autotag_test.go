@@ -60,15 +60,15 @@ type testRepoSetup struct {
 func newTestRepo(t *testing.T, setup testRepoSetup) (GitRepo, error) {
 	t.Helper()
 
-	tr := createTestRepo(t, setup.branch)
-
-	repo, err := git.Open(tr)
-	checkFatal(t, err)
-
 	branch := setup.branch
 	if branch == "" {
 		branch = "main"
 	}
+
+	tr := createTestRepo(t, branch)
+
+	repo, err := git.Open(tr)
+	checkFatal(t, err)
 
 	tag := setup.initialTag
 	if setup.initialTag == "" {
