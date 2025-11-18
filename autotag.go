@@ -130,6 +130,10 @@ type GitRepoConfig struct {
 	// This is useful for CI/CD pipelines where you want to ensure that the commit message adheres to the scheme.
 	// Disabled by default.
 	StrictMatch bool
+
+	// BuildNumber enforces append build number in metadata (after '+' character), returns error if metadata is not a unsigned integer or empty.
+	// Disabled by default.
+	BuildNumber bool
 }
 
 // GitRepo represents a repository we want to run actions against
@@ -150,6 +154,8 @@ type GitRepo struct {
 	strictMatch bool
 
 	prefix bool
+
+	buildNumber bool
 }
 
 // NewRepo is a constructor for a repo object, parsing the tags that exist
@@ -209,6 +215,7 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 		scheme:                    cfg.Scheme,
 		prefix:                    cfg.Prefix,
 		strictMatch:               cfg.StrictMatch,
+		buildNumber:               cfg.BuildNumber,
 	}
 
 	err = r.parseTags()
@@ -226,6 +233,10 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 func validateConfig(cfg GitRepoConfig) error {
 	if cfg.BuildMetadata != "" && !validateSemVerBuildMetadata(cfg.BuildMetadata) {
 		return fmt.Errorf("'%s' is not valid SemVer build metadata", cfg.BuildMetadata)
+	}
+
+	if cfg.BuildNumber && cfg.BuildMetadata != "" {
+		return fmt.Errorf("'%s' is not valid, cannot input metadata if enable build number", cfg.BuildMetadata)
 	}
 
 	if cfg.PreReleaseName != "" && !validateSemVerPreReleaseName(cfg.PreReleaseName) {
@@ -452,7 +463,28 @@ func (r *GitRepo) calcVersion() error {
 	}
 
 	// append optional build metadata
-	if r.buildMetadata != "" {
+	if r.buildNumber {
+		if r.buildMetadata != "" {
+			return fmt.Errorf("cannot input custom method if enable build number")
+		}
+
+		metadata := r.currentVersion.Metadata()
+		buildMetadata := ""
+		if metadata == "" {
+			buildMetadata = "1"
+		} else {
+			currentBuildNumber, err := strconv.ParseUint(metadata, 10, 64)
+			if err != nil {
+				return fmt.Errorf("build number must be a unsigne integer")
+			}
+
+			buildMetadata = strconv.FormatUint(currentBuildNumber+1, 10)
+		}
+
+		if r.newVersion, err = version.NewVersion(fmt.Sprintf("%s+%s", r.newVersion.String(), buildMetadata)); err != nil {
+			return err
+		}
+	} else if r.buildMetadata != "" {
 		if r.newVersion, err = version.NewVersion(fmt.Sprintf("%s+%s", r.newVersion.String(), r.buildMetadata)); err != nil {
 			return err
 		}

@@ -52,6 +52,9 @@ type testRepoSetup struct {
 
 	// (optional) will enforce conventions and return an error if parsers don't find anything (default: false)
 	strictMatch bool
+
+	// (optional) will enforce append build number in metadata and return error if cannot bump (default: false)
+	buildNumber bool
 }
 
 // newTestRepo creates a new git repo in a temporary directory and returns an autotag.GitRepo struct for
@@ -104,6 +107,7 @@ func newTestRepo(t *testing.T, setup testRepoSetup) (GitRepo, error) {
 		Scheme:                    setup.scheme,
 		Prefix:                    !setup.disablePrefix,
 		StrictMatch:               setup.strictMatch,
+		BuildNumber:               setup.buildNumber,
 	})
 	if err != nil {
 		return GitRepo{}, err
@@ -131,6 +135,15 @@ func TestValidateConfig(t *testing.T) {
 			cfg: GitRepoConfig{
 				Branch:        "master",
 				BuildMetadata: "...",
+			},
+			shouldErr: true,
+		},
+		{
+			name: "invalid build metadata - purely empty identifier",
+			cfg: GitRepoConfig{
+				Branch:        "master",
+				BuildNumber:   true,
+				BuildMetadata: "abc",
 			},
 			shouldErr: true,
 		},
@@ -421,6 +434,23 @@ func TestPatch(t *testing.T) {
 
 	if v.String() != "1.0.2" {
 		t.Fatalf("PatchBump failed expected '1.0.2' got '%s' \n", v)
+	}
+}
+
+func TestBuildNumberFirstTime(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		buildNumber: true,
+		initialTag:  "v1.0.1",
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2+1" {
+		t.Fatalf("Build number bump failed expected '1.0.2+1' got '%s' \n", v)
 	}
 }
 
