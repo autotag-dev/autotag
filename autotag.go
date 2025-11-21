@@ -475,7 +475,7 @@ func (r *GitRepo) calcVersion() error {
 		} else {
 			currentBuildNumber, err := strconv.ParseUint(metadata, 10, 64)
 			if err != nil {
-				return fmt.Errorf("build number must be a unsigne integer")
+				return fmt.Errorf("build number must be a unsigned integer")
 			}
 
 			buildMetadata = strconv.FormatUint(currentBuildNumber+1, 10)
