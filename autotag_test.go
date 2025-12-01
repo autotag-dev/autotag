@@ -454,6 +454,41 @@ func TestBuildNumberFirstTime(t *testing.T) {
 	}
 }
 
+func TestBuildNumber(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		buildNumber: true,
+		initialTag:  "v1.0.1+123",
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2+124" {
+		t.Fatalf("Build number bump failed expected '1.0.2+124' got '%s' \n", v)
+	}
+}
+
+func TestBuildNumberWithPrelease(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		initialTag:     "v1.0.1+123",
+		preReleaseName: "dev",
+		buildNumber:    true,
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2-dev+124" {
+		t.Fatalf("Build number bump failed expected '1.0.2-dev+124' got '%s' \n", v)
+	}
+}
+
 func TestMissingInitialTag(t *testing.T) {
 	tr := createTestRepo(t, "")
 	repo, err := git.Open(tr)
