@@ -22,6 +22,7 @@ type Options struct {
 	Scheme              string `short:"s" long:"scheme" description:"The commit message scheme to use (can be: autotag|conventional)" default:"autotag"`
 	NoVersionPrefix     bool   `short:"e" long:"empty-version-prefix" description:"Do not prepend v to version tag"`
 	StrictMatch         bool   `long:"strict-match" description:"Enforce strict mode on the scheme parsers, returns error if no match is found"`
+	BuildNumber         bool   `long:"build-number" description:"Enforce append build number in metadata (after '+' character), returns error if metadata is not a unsigned integer or empty"`
 }
 
 var opts Options
@@ -49,6 +50,7 @@ func main() {
 		Scheme:                    opts.Scheme,
 		Prefix:                    !opts.NoVersionPrefix,
 		StrictMatch:               opts.StrictMatch,
+		BuildNumber:               opts.BuildNumber,
 	})
 	if err != nil {
 		log.SetOutput(os.Stderr)

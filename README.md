@@ -236,6 +236,36 @@ For additional help information use the `-h/--help` flag:
 autotag -h
 ```
 
+### Build Number
+
+Some modern build systems (like: iOS, Android,.. ) support two parts of version: <version_name>+<build_number>. eg: v1.0.1+123
+
+Optional SemVer build metadata in build number format can be appended to the version string after a `+` character using the `--build-number` flag.  
+
+Examples
+--------
+
+Current git repo has initial version `v0.0.1` 
+
+```console
+$ autotag --build-number
+v0.0.1+1
+```
+
+Current git repo has initial version `v1.0.1+123`
+
+```console
+$ autotag --build-number
+v1.0.2+124
+```
+
+You can use build number in develop branch too, for ex: current version is `v1.0.1-dev+123`
+
+```console
+$ autotag --build-number -b develop -p dev
+v1.0.2-dev+124
+```
+
 ### Goreleaser
 
 `autotag` works well with [goreleaser](https://goreleaser.com/) for automating the process of
