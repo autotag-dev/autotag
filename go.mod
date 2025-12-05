@@ -1,11 +1,11 @@
 module github.com/autotag-dev/autotag
 
-go 1.20
+go 1.24.0
 
 require (
 	github.com/alecthomas/assert/v2 v2.11.0
-	github.com/gogs/git-module v1.8.4
-	github.com/hashicorp/go-version v1.7.0
+	github.com/gogs/git-module v1.8.5
+	github.com/hashicorp/go-version v1.8.0
 	github.com/jessevdk/go-flags v1.6.1
 )
 

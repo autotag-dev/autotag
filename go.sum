@@ -7,8 +7,12 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gogs/git-module v1.8.4 h1:oSt8sOL4NWOGrSo/CwbS+C4YXtk76QvxyPofem/ViTU=
 github.com/gogs/git-module v1.8.4/go.mod h1:bQY0aoMK5Q5+NKgy4jXe3K1GFW+GnsSk0SJK0jh6yD0=
+github.com/gogs/git-module v1.8.5 h1:+H1KWQYqdQcbwso6ip5r6EaqQHjUwc9eCnyQ/0v3Q5k=
+github.com/gogs/git-module v1.8.5/go.mod h1:WwWjbU0HQJgQUimNcUHxT06zFEHkb/KC9Vx7Xdxa3Ag=
 github.com/hashicorp/go-version v1.7.0 h1:5tqGy27NaOTB8yJKUZELlFAS/LTKJkrmONwQKeRZfjY=
 github.com/hashicorp/go-version v1.7.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
+github.com/hashicorp/go-version v1.8.0 h1:KAkNb1HAiZd1ukkxDFGmokVZe1Xy9HG6NUp+bPle2i4=
+github.com/hashicorp/go-version v1.8.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/jessevdk/go-flags v1.6.1 h1:Cvu5U8UGrLay1rZfv/zP7iLpSHGUZ/Ou68T0iX1bBK4=
