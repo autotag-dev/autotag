@@ -1,0 +1,32 @@
+# Reproduces the built-in "conventional" scheme (in non-strict mode) as a
+# --scheme-file. Use this as a starting point when customizing which commit
+# types bump which version segment.
+name: conventional
+description: Conventional Commits v1.0.0 — https://www.conventionalcommits.org/en/v1.0.0/
+
+rules:
+  # A footer starting with "BREAKING CHANGE:" anywhere in the commit body
+  # forces a major bump, even when the header type is unknown.
+  - name: breaking-footer
+    match: '(?m)^BREAKING CHANGE:'
+    bump: major
+
+  # A trailing '!' after the type or type(scope) also marks a breaking change.
+  - name: breaking-bang
+    match: '^\w+(\([^)]*\))?!:'
+    bump: major
+
+  # A new feature — minor bump.
+  - name: feat
+    match: '^feat(\([^)]*\))?:'
+    bump: minor
+
+  # The remaining well-known types all map to a patch bump.
+  - name: patch-types
+    match: '^(fix|build|chore|ci|docs|perf|refactor|revert|style|test)(\([^)]*\))?:'
+    bump: patch
+
+# Commits that don't match any rule contribute no version change. This matches
+# the built-in conventional scheme's behavior: non-conforming commits are
+# silently ignored unless --strict-match is enabled, in which case they error.
+default: none
