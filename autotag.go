@@ -123,6 +123,11 @@ type GitRepoConfig struct {
 	//     * https://www.conventionalcommits.org/en/v1.0.0/#summary w
 	Scheme string
 
+	// SchemeFile is an optional path to a YAML file defining a custom scheme.
+	// When set, it takes precedence over Scheme. Passing a non-default Scheme
+	// alongside SchemeFile is an error.
+	SchemeFile string
+
 	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
 	Prefix bool
 
@@ -544,9 +549,18 @@ func (r *GitRepo) parseCommit(commit *git.Commit) (*version.Version, error) {
 	return nil, nil
 }
 
-// resolveScheme maps the user-facing GitRepoConfig.Scheme string to a Scheme
-// implementation. Unknown names are an error.
+// resolveScheme maps the user-facing GitRepoConfig fields to a Scheme
+// implementation. When SchemeFile is set, it is loaded and returned; the
+// built-in Scheme string must then be empty or the default "autotag" (the
+// CLI's default value), otherwise the two are considered mutually exclusive.
+// Unknown built-in scheme names are an error.
 func resolveScheme(cfg GitRepoConfig) (Scheme, error) {
+	if cfg.SchemeFile != "" {
+		if cfg.Scheme != "" && cfg.Scheme != "autotag" {
+			return nil, fmt.Errorf("--scheme and --scheme-file are mutually exclusive")
+		}
+		return LoadSchemeFile(cfg.SchemeFile)
+	}
 	switch cfg.Scheme {
 	case "", "autotag":
 		return autotagScheme{}, nil

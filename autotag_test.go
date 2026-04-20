@@ -22,6 +22,10 @@ type testRepoSetup struct {
 	// (optional) versioning scheme to use, eg: "" or "autotag", "conventional". If not set, defaults to "" (autotag)
 	scheme string
 
+	// (optional) path to a YAML file defining a custom scheme. When set, takes precedence over scheme
+	// (unless scheme is also explicitly set to a non-default value, in which case NewRepo returns an error).
+	schemeFile string
+
 	// (optional) branch to create. If not set, defaults to "master"
 	branch string
 
@@ -105,6 +109,7 @@ func newTestRepo(t *testing.T, setup testRepoSetup) (GitRepo, error) {
 		PreReleaseTimestampLayout: setup.preReleaseTimestampLayout,
 		BuildMetadata:             setup.buildMetadata,
 		Scheme:                    setup.scheme,
+		SchemeFile:                setup.schemeFile,
 		Prefix:                    !setup.disablePrefix,
 		StrictMatch:               setup.strictMatch,
 		BuildNumber:               setup.buildNumber,
@@ -345,6 +350,17 @@ func TestNewRepoStrictMatch(t *testing.T) {
 				strictMatch: true,
 			},
 		},
+
+		// tests for custom YAML schemes
+		{
+			name: "custom scheme with default none, no match fails with strict match",
+			setup: testRepoSetup{
+				schemeFile:  "testdata/schemes/autotag_clone.yaml",
+				initialTag:  "v1.0.0",
+				nextCommit:  "random commit with no marker",
+				strictMatch: true,
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -353,6 +369,24 @@ func TestNewRepoStrictMatch(t *testing.T) {
 			assert.Error(t, err)
 		})
 	}
+}
+
+func TestNewRepoSchemeMutuallyExclusive(t *testing.T) {
+	_, err := newTestRepo(t, testRepoSetup{
+		scheme:     "conventional",
+		schemeFile: "testdata/schemes/valid_minimal.yaml",
+		initialTag: "v1.0.0",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mutually exclusive")
+}
+
+func TestNewRepoSchemeFileLoadError(t *testing.T) {
+	_, err := newTestRepo(t, testRepoSetup{
+		schemeFile: "testdata/schemes/does_not_exist.yaml",
+		initialTag: "v1.0.0",
+	})
+	assert.Error(t, err)
 }
 
 func TestMajor(t *testing.T) {
@@ -785,6 +819,53 @@ func TestAutoTag(t *testing.T) {
 				initialTag: "v0.9.0",
 			},
 			expectedTag: "v0.10.0",
+		},
+
+		// tests for custom YAML schemes
+		{
+			name: "custom scheme, rule match bumps minor",
+			setup: testRepoSetup{
+				schemeFile: "testdata/schemes/valid_minimal.yaml",
+				nextCommit: "feat: add thing",
+				initialTag: "v1.0.0",
+			},
+			expectedTag: "v1.1.0",
+		},
+		{
+			name: "custom scheme, no match falls back to default patch",
+			setup: testRepoSetup{
+				schemeFile: "testdata/schemes/valid_minimal.yaml",
+				nextCommit: "random commit message",
+				initialTag: "v1.0.0",
+			},
+			expectedTag: "v1.0.1",
+		},
+		{
+			name: "custom scheme, autotag_clone replicates built-in autotag",
+			setup: testRepoSetup{
+				schemeFile: "testdata/schemes/autotag_clone.yaml",
+				commitList: []string{
+					"[minor] thing 1",
+					"[major] break thing 1",
+					"[minor] thing 2",
+				},
+				initialTag: "v1.0.0",
+			},
+			expectedTag: "v2.0.0",
+		},
+		{
+			name: "custom scheme, conventional_clone replicates built-in conventional",
+			setup: testRepoSetup{
+				schemeFile: "testdata/schemes/conventional_clone.yaml",
+				commitList: []string{
+					"feat: thing 1",
+					"feat!: break thing 1",
+					"feat: thing 2",
+					"refactor(runtime)!: drop support for Node 6",
+				},
+				initialTag: "v1.0.0",
+			},
+			expectedTag: "v2.0.0",
 		},
 	}
 
