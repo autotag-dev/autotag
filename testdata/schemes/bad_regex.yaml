@@ -1,0 +1,6 @@
+name: bad-regex
+rules:
+  - name: broken
+    match: '[unterminated'
+    bump: minor
+default: patch

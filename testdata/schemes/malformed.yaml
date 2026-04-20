@@ -1,0 +1,6 @@
+name: broken
+rules:
+  - match: '^feat'
+    bump: minor
+  this is: not: valid yaml
+default: patch
