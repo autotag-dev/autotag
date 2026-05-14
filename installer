@@ -354,6 +354,13 @@ GITHUB_DOWNLOAD=https://github.com/${OWNER}/${REPO}/releases/download
 uname_os_check "$OS"
 uname_arch_check "$ARCH"
 
+cat >&2 <<'EOF'
+WARNING: this install script is deprecated and no longer maintained.
+         For CI pipelines, prefer the pinned-binary + checksum approach:
+         https://github.com/autotag-dev/autotag
+
+EOF
+
 parse_args "$@"
 
 get_binaries
