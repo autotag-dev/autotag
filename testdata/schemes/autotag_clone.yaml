@@ -1,0 +1,13 @@
+name: autotag-clone
+description: Replicates the built-in autotag scheme.
+rules:
+  - name: major
+    match: '(?i)\[major\]|#major'
+    bump: major
+  - name: minor
+    match: '(?i)\[minor\]|#minor'
+    bump: minor
+  - name: patch
+    match: '(?i)\[patch\]|#patch'
+    bump: patch
+default: none

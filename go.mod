@@ -7,6 +7,7 @@ require (
 	github.com/gogs/git-module v1.8.5
 	github.com/hashicorp/go-version v1.8.0
 	github.com/jessevdk/go-flags v1.6.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

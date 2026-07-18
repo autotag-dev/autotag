@@ -123,6 +123,11 @@ type GitRepoConfig struct {
 	//     * https://www.conventionalcommits.org/en/v1.0.0/#summary w
 	Scheme string
 
+	// SchemeFile is an optional path to a YAML file defining a custom scheme.
+	// When set, it takes precedence over Scheme. Passing a non-default Scheme
+	// alongside SchemeFile is an error.
+	SchemeFile string
+
 	// Prefix prepends literal 'v' to the tag, eg: v1.0.0. Enabled by default
 	Prefix bool
 
@@ -153,7 +158,7 @@ type GitRepo struct {
 	preReleaseTimestampLayout string
 	buildMetadata             string
 
-	scheme      string
+	scheme      Scheme
 	strictMatch bool
 
 	prefix bool
@@ -209,13 +214,18 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 		}
 	}
 
+	scheme, err := resolveScheme(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	r := &GitRepo{
 		repo:                      repo,
 		branch:                    cfg.Branch,
 		preReleaseName:            cfg.PreReleaseName,
 		preReleaseTimestampLayout: cfg.PreReleaseTimestampLayout,
 		buildMetadata:             cfg.BuildMetadata,
-		scheme:                    cfg.Scheme,
+		scheme:                    scheme,
 		prefix:                    cfg.Prefix,
 		strictMatch:               cfg.StrictMatch,
 		buildNumber:               cfg.BuildNumber,
@@ -524,82 +534,41 @@ func (r *GitRepo) tagNewVersion() error {
 
 // parseCommit looks at HEAD commit see if we want to increment major/minor/patch
 func (r *GitRepo) parseCommit(commit *git.Commit) (*version.Version, error) {
-	var b bumper
 	msg := commit.Message
 	log.Printf("Parsing %s: %s\n", commit.ID, msg)
 
-	switch r.scheme {
-	case "conventional":
-		b = parseConventionalCommit(msg, r.strictMatch)
-	case "", "autotag":
-		b = parseAutotagCommit(msg)
-	}
+	b := r.scheme.ParseCommit(msg)
 
 	if r.strictMatch && b == nil {
 		return nil, fmt.Errorf("no match found for commit %s", commit.ID)
 	}
 
-	// fallback to patch bump if no matches from the scheme parsers
 	if b != nil {
 		return b.bump(r.currentVersion)
 	}
-
 	return nil, nil
 }
 
-// parseAutotagCommit implements the autotag (default) commit scheme.
-// A git commit message header containing:
-//   - [major] or #major: major version bump
-//   - [minor] or #minor: minor version bump
-//   - [patch] or #patch: patch version bump
-//
-// If no action is present nil is returned and the caller must decide what action to take.
-func parseAutotagCommit(msg string) bumper {
-	if majorRex.MatchString(msg) {
-		log.Println("major bump")
-		return majorBumper
+// resolveScheme maps the user-facing GitRepoConfig fields to a Scheme
+// implementation. When SchemeFile is set, it is loaded and returned; the
+// built-in Scheme string must then be empty or the default "autotag" (the
+// CLI's default value), otherwise the two are considered mutually exclusive.
+// Unknown built-in scheme names are an error.
+func resolveScheme(cfg GitRepoConfig) (Scheme, error) {
+	if cfg.SchemeFile != "" {
+		if cfg.Scheme != "" && cfg.Scheme != "autotag" {
+			return nil, fmt.Errorf("--scheme and --scheme-file are mutually exclusive")
+		}
+		return LoadSchemeFile(cfg.SchemeFile)
 	}
-
-	if minorRex.MatchString(msg) {
-		log.Println("minor bump")
-		return minorBumper
+	switch cfg.Scheme {
+	case "", "autotag":
+		return autotagScheme{}, nil
+	case "conventional":
+		return conventionalScheme{strictMatch: cfg.StrictMatch}, nil
+	default:
+		return nil, fmt.Errorf("unknown scheme %q", cfg.Scheme)
 	}
-
-	if patchRex.MatchString(msg) {
-		log.Println("patch bump")
-		return patchBumper
-	}
-
-	return nil
-}
-
-// parseConventionalCommit implements the Conventional Commit scheme. Given a commit message
-// A strict match option will enforce that the commit message must match the conventional commit
-// it will return the correct version bumper. In the case of non-confirming conventional commit
-// it will return nil and the caller will decide what action to take.
-// https://www.conventionalcommits.org/en/v1.0.0/#summary
-func parseConventionalCommit(msg string, strictMatch bool) bumper {
-	matches := findNamedMatches(conventionalCommitRex, msg)
-
-	// If we're in strict match and no matches are found, return nil
-	bumperType, authorized := conventionalCommitAuthorizedTypes[matches["type"]]
-	if strictMatch && !authorized {
-		return nil
-	}
-
-	// If the commit contains a footer with 'BREAKING CHANGE:' it is always a major bump
-	if strings.Contains(msg, "\nBREAKING CHANGE:") {
-		return majorBumper
-	}
-
-	// If the type/scope in the header includes a trailing '!' this is a breaking change
-	if breaking, ok := matches["breaking"]; ok && breaking == "!" {
-		return majorBumper
-	}
-
-	// If the type in the header match a type try to find it in the authorized list
-	// If it's not in the list it returns nil
-	return bumperType
 }
 
 // MajorBump will bump the version one major rev 1.0.0 -> 2.0.0

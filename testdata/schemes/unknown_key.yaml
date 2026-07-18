@@ -1,0 +1,6 @@
+name: unknown-key
+rules:
+  - match: '^feat'
+    bump: minor
+default: patch
+mystery: this key is not part of the schema

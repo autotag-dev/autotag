@@ -1,0 +1,6 @@
+name: bad-bump
+rules:
+  - name: weird
+    match: '^feat'
+    bump: megamajor
+default: patch

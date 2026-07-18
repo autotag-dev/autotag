@@ -1,0 +1,16 @@
+name: conventional-clone
+description: Replicates the built-in conventional commits scheme in non-strict mode.
+rules:
+  - name: breaking-footer
+    match: '(?m)^BREAKING CHANGE:'
+    bump: major
+  - name: breaking-bang
+    match: '^\w+(\([^)]*\))?!:'
+    bump: major
+  - name: feat
+    match: '^feat(\([^)]*\))?:'
+    bump: minor
+  - name: patch-types
+    match: '^(fix|build|chore|ci|docs|perf|refactor|revert|style|test)(\([^)]*\))?:'
+    bump: patch
+default: none

@@ -1,0 +1,4 @@
+name: no-default
+rules:
+  - match: '^feat'
+    bump: minor

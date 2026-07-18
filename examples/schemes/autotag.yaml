@@ -1,0 +1,20 @@
+# Reproduces the built-in "autotag" scheme as a --scheme-file.
+# Use this as a starting point when customizing the bracket/hash keyword style.
+name: autotag
+description: Bump based on [major]/[minor]/[patch] or #major/#minor/#patch markers.
+
+rules:
+  - name: major
+    match: '(?i)\[major\]|#major'
+    bump: major
+  - name: minor
+    match: '(?i)\[minor\]|#minor'
+    bump: minor
+  - name: patch
+    match: '(?i)\[patch\]|#patch'
+    bump: patch
+
+# The built-in autotag scheme falls back to a patch bump when no marker is
+# present. Use `default: none` if you'd rather unmatched commits contribute
+# nothing (combine with --strict-match to turn them into errors).
+default: patch

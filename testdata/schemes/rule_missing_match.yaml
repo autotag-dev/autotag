@@ -1,0 +1,5 @@
+name: missing-match
+rules:
+  - name: orphan
+    bump: minor
+default: patch

@@ -20,6 +20,7 @@ type Options struct {
 	PreReleaseTimestamp string `short:"T" long:"pre-release-timestamp" description:"create a pre-release tag and append a timestamp (can be: datetime|epoch)"`
 	BuildMetadata       string `short:"m" long:"build-metadata" description:"optional SemVer build metadata to append to the version with '+' character"`
 	Scheme              string `short:"s" long:"scheme" description:"The commit message scheme to use (can be: autotag|conventional)" default:"autotag"`
+	SchemeFile          string `long:"scheme-file" description:"Path to a YAML file defining a custom scheme (mutually exclusive with --scheme)"`
 	NoVersionPrefix     bool   `short:"e" long:"empty-version-prefix" description:"Do not prepend v to version tag"`
 	StrictMatch         bool   `long:"strict-match" description:"Enforce strict mode on the scheme parsers, returns error if no match is found"`
 	BuildNumber         bool   `long:"build-number" description:"Enforce append build number in metadata (after '+' character), returns error if metadata is not a unsigned integer or empty"`
@@ -48,6 +49,7 @@ func main() {
 		PreReleaseTimestampLayout: opts.PreReleaseTimestamp,
 		BuildMetadata:             opts.BuildMetadata,
 		Scheme:                    opts.Scheme,
+		SchemeFile:                opts.SchemeFile,
 		Prefix:                    !opts.NoVersionPrefix,
 		StrictMatch:               opts.StrictMatch,
 		BuildNumber:               opts.BuildNumber,

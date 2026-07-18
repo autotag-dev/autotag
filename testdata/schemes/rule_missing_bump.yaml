@@ -1,0 +1,5 @@
+name: missing-bump
+rules:
+  - name: orphan
+    match: '^feat'
+default: patch

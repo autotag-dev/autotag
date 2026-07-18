@@ -174,6 +174,70 @@ refactor!: drop support for Node 6
 
 If no keywords are specified a **Patch** bump is applied.
 
+### Scheme: Custom (YAML)
+
+A user-defined scheme can be supplied via a YAML file using the `--scheme-file` flag. This is
+useful when neither the autotag nor Conventional Commits scheme fits your project's commit
+conventions.
+
+`--scheme-file` is mutually exclusive with an explicitly non-default `--scheme`: pass one or the
+other. Ready-to-copy reference schemes are available under
+[`examples/schemes/`](examples/schemes/).
+
+#### YAML schema
+
+```yaml
+name: my-custom-scheme          # required: identifier used in logs
+description: Optional summary.  # optional: free-form
+
+# Rules are evaluated in declaration order. The first rule whose regex matches
+# the commit message determines the bump. Remaining rules are not consulted.
+rules:
+  - name: breaking-footer       # optional: shown in validation errors
+    match: '(?m)^BREAKING CHANGE:'
+    bump: major
+  - name: feat
+    match: '^feat(\([^)]*\))?:'
+    bump: minor
+  - name: patch-types
+    match: '^(fix|chore|docs|refactor)(\([^)]*\))?:'
+    bump: patch
+
+# Required. What to do when no rule matches a commit.
+# Allowed values: major | minor | patch | none
+default: patch
+```
+
+- `match` is a Go [regexp](https://pkg.go.dev/regexp/syntax) pattern.
+- `bump` and `default` must be one of `major`, `minor`, `patch`, or `none`.
+- A rule with `bump: none` matches the commit but contributes no version change — useful for
+  explicitly ignoring commits (e.g., merge commits) without falling through to the default.
+- `default: none` combined with `--strict-match` will cause unmatched commits to error out instead
+  of being silently ignored.
+
+All validation (regex compilation, allowed bump values, required fields, unknown keys) happens at
+load time, so a malformed scheme fails fast with a clear error before any commits are parsed.
+
+#### Example
+
+Given a scheme file `./my-scheme.yaml`:
+
+```yaml
+name: my-scheme
+rules:
+  - match: '(?m)^BREAKING CHANGE:'
+    bump: major
+  - match: '^feat:'
+    bump: minor
+default: patch
+```
+
+Invoke autotag with:
+
+```sh
+autotag --scheme-file ./my-scheme.yaml
+```
+
 ### Strict Match Option
 
 The `--strict-match` option enforces that commit messages must strictly adhere to the specified commit message scheme.
@@ -196,6 +260,13 @@ When the `--strict-match` option is enabled, the behavior of the commit message 
   patch version bump by default.
   - With `--strict-match`: Commit messages that do not follow the conventional commit format will result in an
   error, and the commit will not be processed.
+
+- **Custom (YAML) Scheme**:
+  - Without `--strict-match`: Unmatched commits use the scheme's `default` value. When `default:
+  none`, those commits contribute no version change.
+  - With `--strict-match`: Unmatched commits (no rule matches **and** the scheme declares `default:
+  none`) result in an error. If the scheme's `default` is `major`, `minor`, or `patch`, the
+  fallback is always taken and strict-match never fires.
 
 #### Usage
 

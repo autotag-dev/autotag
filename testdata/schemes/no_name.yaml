@@ -1,0 +1,4 @@
+rules:
+  - match: '^feat'
+    bump: minor
+default: patch
