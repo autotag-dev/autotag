@@ -57,7 +57,7 @@ jobs:
           persist-credentials: false
 
       - name: Check goreleaser's Configuration
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7
         with:
           version: latest
           args: check
