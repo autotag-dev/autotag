@@ -18,6 +18,7 @@ type Options struct {
 	RepoPath            string `short:"r" long:"repo" description:"Path to the repo" default:"./" `
 	PreReleaseName      string `short:"p" long:"pre-release-name" description:"create a pre-release tag"`
 	PreReleaseTimestamp string `short:"T" long:"pre-release-timestamp" description:"create a pre-release tag and append a timestamp (can be: datetime|epoch)"`
+	PreReleaseNumber    bool   `long:"pre-release-number" description:"create a pre-release tag and append a pre-release number"`
 	BuildMetadata       string `short:"m" long:"build-metadata" description:"optional SemVer build metadata to append to the version with '+' character"`
 	Scheme              string `short:"s" long:"scheme" description:"The commit message scheme to use (can be: autotag|conventional)" default:"autotag"`
 	NoVersionPrefix     bool   `short:"e" long:"empty-version-prefix" description:"Do not prepend v to version tag"`
@@ -46,6 +47,7 @@ func main() {
 		Branch:                    opts.Branch,
 		PreReleaseName:            opts.PreReleaseName,
 		PreReleaseTimestampLayout: opts.PreReleaseTimestamp,
+		PreReleaseNumber:          opts.PreReleaseNumber,
 		BuildMetadata:             opts.BuildMetadata,
 		Scheme:                    opts.Scheme,
 		Prefix:                    !opts.NoVersionPrefix,

@@ -99,6 +99,15 @@ type GitRepoConfig struct {
 	// 		v1.2.3-pre.1499308568
 	PreReleaseTimestampLayout string
 
+	// PreReleaseNumber is the optional flag that's used to tell program append a
+	// build number to the git tag as second part of prerelease.
+	//
+	// Assuming PreReleaseName is set to `pre`, the PreReleaseBuildNumber is appended to
+	// that value separated by a period (`.`):
+	//
+	// 		v1.2.3-pre.1
+	PreReleaseNumber bool
+
 	// BuildMetadata is an optional string appended by a plus sign and a series of dot separated
 	// identifiers immediately following the patch or pre-release version. Identifiers MUST comprise
 	// only ASCII alphanumerics and hyphen [0-9A-Za-z-]. Identifiers MUST NOT be empty. Build metadata
@@ -146,11 +155,13 @@ type GitRepo struct {
 	branch         string
 	branchID       string // commit id of the branch latest commit (where we will apply the tag)
 
+	curPreReleaseVer *version.Version
 	latestTagVersion *version.Version
 	latestTagCommit  *git.Commit
 
 	preReleaseName            string
 	preReleaseTimestampLayout string
+	preReleaseNumber          bool
 	buildMetadata             string
 
 	scheme      string
@@ -214,6 +225,7 @@ func NewRepo(cfg GitRepoConfig) (*GitRepo, error) {
 		branch:                    cfg.Branch,
 		preReleaseName:            cfg.PreReleaseName,
 		preReleaseTimestampLayout: cfg.PreReleaseTimestampLayout,
+		preReleaseNumber:          cfg.PreReleaseNumber,
 		buildMetadata:             cfg.BuildMetadata,
 		scheme:                    cfg.Scheme,
 		prefix:                    cfg.Prefix,
@@ -310,6 +322,13 @@ func (r *GitRepo) parseTags() error {
 			r.latestTagCommit = versions[version]
 		}
 
+		// stamps latest tag for pre-release
+		if r.preReleaseName != "" && version.Prerelease() != "" && r.curPreReleaseVer == nil {
+			if strings.HasPrefix(version.Prerelease(), fmt.Sprintf("%s.", r.preReleaseName)) {
+				r.curPreReleaseVer = version
+			}
+		}
+
 		if len(version.Prerelease()) == 0 {
 			r.currentVersion = version
 			r.currentTag = versions[version]
@@ -365,7 +384,7 @@ func (r *GitRepo) retrieveBranchInfo() error {
 	return nil
 }
 
-func preReleaseVersion(v *version.Version, name, tsLayout string) (*version.Version, error) {
+func preReleaseVersion(v, curPrereleaseVer *version.Version, name, tsLayout string, autoIncrease bool) (*version.Version, error) {
 	if len(name) == 0 && len(tsLayout) == 0 {
 		return v, nil
 	}
@@ -404,6 +423,33 @@ func preReleaseVersion(v *version.Version, name, tsLayout string) (*version.Vers
 
 		if _, err := buf.WriteString(timestamp); err != nil {
 			return nil, err
+		}
+	} else {
+		if len(name) > 0 && autoIncrease {
+			// Write the `.` character
+			if buf.Len() > 0 {
+				if _, err := buf.WriteString("."); err != nil {
+					return nil, err
+				}
+			}
+
+			prereleaseNumber := "1"
+			if curPrereleaseVer != nil {
+				prerelease := curPrereleaseVer.Prerelease()
+				prereleaseParts := strings.Split(prerelease, ".")
+				if len(prereleaseParts) == 2 {
+					currentPrereleaseNumber, err := strconv.ParseUint(prereleaseParts[1], 10, 64)
+					if err != nil {
+						return nil, fmt.Errorf("prerelease build number must be a unsigned integer")
+					}
+
+					prereleaseNumber = strconv.FormatUint(currentPrereleaseNumber+1, 10)
+				}
+			}
+
+			if _, err := buf.WriteString(prereleaseNumber); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -466,7 +512,7 @@ func (r *GitRepo) calcVersion() error {
 
 	// append pre-release-name and/or pre-release-timestamp to the version
 	if len(r.preReleaseName) > 0 || len(r.preReleaseTimestampLayout) > 0 {
-		if r.newVersion, err = preReleaseVersion(r.newVersion, r.preReleaseName, r.preReleaseTimestampLayout); err != nil {
+		if r.newVersion, err = preReleaseVersion(r.newVersion, r.curPreReleaseVer, r.preReleaseName, r.preReleaseTimestampLayout, r.preReleaseNumber); err != nil {
 			return err
 		}
 	}

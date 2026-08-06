@@ -214,6 +214,8 @@ autotag --strict-match
 
 - Use `-T/--pre-release-timestmap=` to append **timestamp** to the version. Allowed timetstamp
   formats are `datetime` (YYYYMMDDHHMMSS) or `epoch` (UNIX epoch timestamp in seconds).
+  
+- Use `--pre-release-number` to append pre-release number to the version. Pre-release is also mentioned in the [SemVer](https://semver.org/#spec-item-9) spec. Note: `--pre-release-number` is used only when option `--pre-release-timestmap` isn't enabled.
 
 ### Build metadata
 

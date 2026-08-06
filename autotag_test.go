@@ -37,6 +37,9 @@ type testRepoSetup struct {
 	// (optional) the prerelease timestamp format to use, eg: "epoch". If not set, no prerelease timestamp will be used
 	preReleaseTimestampLayout string
 
+	// (optional) will optional append prerelease number in second part of prerelease (default: false)
+	preReleaseNumber bool
+
 	// (optional) build metadata to append to the version
 	buildMetadata string
 
@@ -103,6 +106,7 @@ func newTestRepo(t *testing.T, setup testRepoSetup) (GitRepo, error) {
 		Branch:                    branch,
 		PreReleaseName:            setup.preReleaseName,
 		PreReleaseTimestampLayout: setup.preReleaseTimestampLayout,
+		PreReleaseNumber:          setup.preReleaseNumber,
 		BuildMetadata:             setup.buildMetadata,
 		Scheme:                    setup.scheme,
 		Prefix:                    !setup.disablePrefix,
@@ -434,6 +438,81 @@ func TestPatch(t *testing.T) {
 
 	if v.String() != "1.0.2" {
 		t.Fatalf("PatchBump failed expected '1.0.2' got '%s' \n", v)
+	}
+}
+
+func TestPrereleaseNumberFirstTime(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		preReleaseNumber: true,
+		preReleaseName:   "dev",
+		initialTag:       "v1.0.1",
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2-dev.1" {
+		t.Fatalf("Prerelease number bump failed expected '1.0.2-dev.1' got '%s' \n", v)
+	}
+}
+
+func TestPrereleaseNumber(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		preReleaseNumber: true,
+		preReleaseName:   "dev",
+		initialTag:       "v1.0.1",
+		extraTags:        []string{"v1.0.2-dev.1"},
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2-dev.2" {
+		t.Fatalf("Prerelease number bump failed expected '1.0.2-dev.2' got '%s' \n", v)
+	}
+}
+
+func TestPrereleaseNumberWithExtraTags(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		preReleaseNumber: true,
+		preReleaseName:   "dev",
+		initialTag:       "v1.0.1",
+		extraTags:        []string{"v1.0.2-dev.1", "v1.0.2-next.1"},
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.2-dev.2" {
+		t.Fatalf("Prerelease number bump failed expected '1.0.2-dev.2' got '%s' \n", v)
+	}
+}
+
+func TestPrereleaseNumberWithNewVersion(t *testing.T) {
+	r, err := newTestRepo(t, testRepoSetup{
+		preReleaseNumber: true,
+		preReleaseName:   "dev",
+		initialTag:       "v1.0.1",
+		extraTags:        []string{"v1.0.2-dev.1", "v1.0.2"},
+	})
+	if err != nil {
+		t.Fatal("Error creating repo: ", err)
+	}
+	defer cleanupTestRepo(t, r.repo)
+
+	v := r.LatestVersion()
+
+	if v != "1.0.3-dev.1" {
+		t.Fatalf("Prerelease number bump failed expected '1.0.3-dev.1' got '%s' \n", v)
 	}
 }
 
